@@ -1,18 +1,31 @@
 import { MikroORM } from "@mikro-orm/core"
+import { ApolloServer } from "apollo-server-express"
+import { buildSchema } from "type-graphql"
+import express from "express"
 
-import { __prod__ } from "./constants"
+import { __port__, __prod__ } from "./constants"
 import { Expense } from "./entities/Expense"
+import { HelloResolver } from "./resolvers/hello"
 import ormConfig from "./mikro-orm.config"
 
 const main = async () => {
   const orm = await MikroORM.init(ormConfig)
   await orm.getMigrator().up()
 
-  // const expense = orm.em.create(Expense, { value: 13.3 })
-  // orm.em.persistAndFlush(expense)
+  const app = express()
 
-  // const expense = await orm.em.find(Expense, {})
-  // console.log(expense)
+  const apolloServer = new ApolloServer({
+    schema: await buildSchema({
+      resolvers: [HelloResolver],
+      validate: false,
+    }),
+  })
+
+  apolloServer.applyMiddleware({ app })
+
+  app.listen(__port__, () => {
+    console.log(`server started on port ${__port__}`)
+  })
 }
 
 main().catch(err => {
