@@ -1,18 +1,18 @@
-import { Entity, PrimaryKey, Property } from "@mikro-orm/core";
+import { Entity, PrimaryKey, Property } from "@mikro-orm/core"
 
 @Entity()
 export class Expense {
   @PrimaryKey()
-  id!: number;
+  id!: number
 
-  @Property()
-  createdAt = new Date();
+  @Property({ type: "date" })
+  createdAt = new Date()
 
-  @Property({ onUpdate: () => new Date() })
-  updatedAt = new Date();
+  @Property({ type: "date", onUpdate: () => new Date() })
+  updatedAt = new Date()
 
-  @Property()
-  value!: number;
+  @Property({ type: "float" })
+  value!: number
 
   //   @ManyToOne() // when you provide correct type hint, ORM will read it for you
   //   author!: Author;
