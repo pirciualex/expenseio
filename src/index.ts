@@ -4,9 +4,10 @@ import { buildSchema } from "type-graphql"
 import express from "express"
 
 import { __port__, __prod__ } from "./constants"
-import { Expense } from "./entities/Expense"
+// import { Expense } from "./entities/Expense"
 import { HelloResolver } from "./resolvers/hello"
 import ormConfig from "./mikro-orm.config"
+import { ExpenseResolver } from "./resolvers/expense"
 
 const main = async () => {
   const orm = await MikroORM.init(ormConfig)
@@ -16,9 +17,10 @@ const main = async () => {
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [HelloResolver],
+      resolvers: [ExpenseResolver, HelloResolver],
       validate: false,
     }),
+    context: () => ({ em: orm.em }),
   })
 
   apolloServer.applyMiddleware({ app })
