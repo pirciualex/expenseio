@@ -2,13 +2,14 @@ import { MikroORM } from "@mikro-orm/core"
 import path from "path"
 import { __prod__ } from "./constants"
 import { Expense } from "./entities/Expense"
+import { User } from "./entities/User"
 
 export default {
   migrations: {
     path: path.join(__dirname, "./migrations"),
     pattern: /^[\w-]+\d+\.[tj]s$/,
   },
-  entities: [Expense],
+  entities: [Expense, User],
   dbName: "expenseio",
   user: "owner",
   password: "postgres",
