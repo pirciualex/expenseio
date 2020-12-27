@@ -1,6 +1,8 @@
 import { DbContext } from "src/types"
 import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql"
 import { Expense } from "../entities/Expense"
+import { ExpenseResponseDto } from "../dtos/ExpenseDto"
+import { ExpenseDeletedDto } from "../dtos/ExpenseDeletedDto"
 
 @Resolver()
 export class ExpenseResolver {
@@ -9,16 +11,23 @@ export class ExpenseResolver {
     return em.find(Expense, {})
   }
 
-  @Query(() => Expense)
+  @Query(() => ExpenseResponseDto)
   async expense(
     @Arg("id") id: number,
     @Ctx() { em }: DbContext
-  ): Promise<Expense> {
+  ): Promise<ExpenseResponseDto> {
     const expense = await em.findOne(Expense, { id })
     if (!expense) {
-      throw new Error("Expense not found!")
+      return {
+        errors: [
+          {
+            field: "expense",
+            message: "Expense not found!",
+          },
+        ],
+      }
     }
-    return expense
+    return { expense }
   }
 
   @Mutation(() => Expense)
@@ -31,30 +40,44 @@ export class ExpenseResolver {
     return expense
   }
 
-  @Mutation(() => Expense)
+  @Mutation(() => ExpenseResponseDto)
   async updateExpense(
     @Arg("id") id: number,
     @Arg("value") value: number,
     @Ctx() { em }: DbContext
-  ): Promise<Expense> {
+  ): Promise<ExpenseResponseDto> {
     const expense = await em.findOne(Expense, { id })
     if (!expense) {
-      throw new Error("Expense not found!")
+      return {
+        errors: [
+          {
+            field: "expense",
+            message: "Expense not found!",
+          },
+        ],
+      }
     }
     expense.value = value
-    return expense
+    return { expense }
   }
 
-  @Mutation(() => Boolean)
+  @Mutation(() => ExpenseDeletedDto)
   async deleteExpense(
     @Arg("id") id: number,
     @Ctx() { em }: DbContext
-  ): Promise<boolean> {
+  ): Promise<ExpenseDeletedDto> {
     const expense = await em.findOne(Expense, { id })
     if (!expense) {
-      throw new Error("Expense not found!")
+      return {
+        errors: [
+          {
+            field: "expense",
+            message: "Expense not found!",
+          },
+        ],
+      }
     }
     await em.nativeDelete(Expense, { id })
-    return true
+    return { deleted: true }
   }
 }
