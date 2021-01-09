@@ -1,11 +1,25 @@
-import { FormControl, FormLabel, Input } from "@chakra-ui/react"
+import {
+  Box,
+  Button,
+  FormControl,
+  FormLabel,
+  Icon,
+  Input,
+  InputGroup,
+  InputRightAddon,
+  InputRightElement,
+} from "@chakra-ui/react"
 import { Form, Formik } from "formik"
 import React from "react"
+import InputField from "../components/InputField"
 import Wrapper from "../components/Wrapper"
 
 interface registerProps {}
 
 const Register: React.FC<registerProps> = () => {
+  const [show, setShow] = React.useState(false)
+  const handleClick = () => setShow(!show)
+
   return (
     <Wrapper variant="small">
       <Formik
@@ -14,18 +28,39 @@ const Register: React.FC<registerProps> = () => {
           console.log(values)
         }}
       >
-        {({ values, handleChange }) => (
+        {({ isSubmitting }) => (
           <Form>
-            <FormControl>
-              <FormLabel htmlFor="username">Username</FormLabel>
-              <Input
-                value={values.username}
-                onChange={handleChange}
-                id="username"
-                placeholder="username"
+            <InputField
+              name="username"
+              placeholder="username"
+              label="Username"
+            />
+            <InputGroup mt={10}>
+              <InputField
+                name="password"
+                placeholder="password"
+                label="Password"
+                type={show ? "text" : "password"}
               />
-              {/* <FormErrorMessage>{form.errors.name}</FormErrorMessage> */}
-            </FormControl>
+              <InputRightElement
+                position="absolute"
+                top="none"
+                bottom="0"
+                width="5rem"
+              >
+                <Button h="1.75rem" my="auto" size="sm" onClick={handleClick}>
+                  {show ? "Hide" : "Show"}
+                </Button>
+              </InputRightElement>
+            </InputGroup>
+            <Button
+              type="submit"
+              colorScheme="green"
+              mt={10}
+              isLoading={isSubmitting}
+            >
+              Register
+            </Button>
           </Form>
         )}
       </Formik>
