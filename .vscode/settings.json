@@ -6,7 +6,10 @@
         "esnext",
         "expenseio",
         "mikro",
+        "pirciualex",
         "postgres",
-        "postgresql"
+        "postgresql",
+        "resave",
+        "urql"
     ]
 }
