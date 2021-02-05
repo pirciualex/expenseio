@@ -10,41 +10,34 @@ import {
   InputRightElement,
 } from "@chakra-ui/react"
 import { Form, Formik } from "formik"
+import { useRouter } from "next/router"
 import React from "react"
-import { useMutation } from "urql"
+
 import InputField from "../components/InputField"
 import Wrapper from "../components/Wrapper"
+import { useRegisterMutation } from "../generated/graphql"
+import { toErrorMap } from "../helpers/toErrorMap"
 
 interface registerProps {}
 
-const REGISTER_MUTATION = `
-mutation Register($username: String!, $password: String!) {
-  register(input: { username: $username, password: $password }) {
-    user {
-      id
-      createdAt
-      updatedAt
-      username
-    }
-    errors {
-      field
-      message
-    }
-  }
-}
-`
-
 const Register: React.FC<registerProps> = () => {
+  const router = useRouter()
   const [show, setShow] = React.useState(false)
   const handleClick = () => setShow(!show)
-  const [, register] = useMutation(REGISTER_MUTATION)
+  const [, register] = useRegisterMutation()
 
   return (
     <Wrapper variant="small">
       <Formik
         initialValues={{ username: "", password: "" }}
-        onSubmit={values => {
-          return register(values)
+        onSubmit={async (values, { setErrors }) => {
+          const response = await register(values)
+
+          if (response.data?.register.errors) {
+            setErrors(toErrorMap(response.data.register.errors))
+          } else if (response.data?.register.user) {
+            router.push("/")
+          }
         }}
       >
         {({ isSubmitting }) => (

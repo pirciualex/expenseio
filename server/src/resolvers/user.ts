@@ -8,9 +8,11 @@ import {
   Resolver,
 } from "type-graphql"
 import argon2 from "argon2"
+import { EntityManager } from "@mikro-orm/postgresql"
+
 import { DbContext } from "../types"
-import { User } from "../entities/User"
 import { UserResponseDto } from "../dtos/UserResponseDto"
+import { User } from "../entities/User"
 
 @InputType()
 class UsernamePasswordInput {
@@ -65,7 +67,21 @@ export class UserResolver {
       username: input.username,
       password: hashedPassword,
     })
+    // !using query builder results in user not having dates set up correctly
+    // let user
     try {
+      // const result = await (em as EntityManager)
+      //   .createQueryBuilder(User)
+      //   .getKnexQuery()
+      //   .insert({
+      //     username: input.username,
+      //     password: hashedPassword,
+      //     created_at: new Date(),
+      //     updated_at: new Date(),
+      //   })
+      //   .returning("*")
+
+      // user = result[0]
       await em.persistAndFlush(user)
     } catch (err) {
       if (err.code === "23505") {
