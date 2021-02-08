@@ -5,6 +5,7 @@ import { createClient, dedupExchange, fetchExchange, Provider } from "urql"
 import Navbar from "../components/Navbar"
 import {
   LoginMutation,
+  LogoutMutation,
   MeDocument,
   MeQuery,
   RegisterMutation,
@@ -44,6 +45,16 @@ const client = createClient({
                   }
                 }
               }
+            )
+          },
+          logout: (_result, _args, cache, _info) => {
+            customUpdateQuery<LogoutMutation, MeQuery>(
+              cache,
+              { query: MeDocument },
+              _result,
+              () => ({
+                me: null,
+              })
             )
           },
           register: (_result, _args, cache, _info) => {

@@ -7,7 +7,7 @@ import express from "express"
 import redis from "redis"
 import session from "express-session"
 
-import { __port__, __prod__ } from "./constants"
+import { COOKIE_NAME, __port__, __prod__ } from "./constants"
 import { HelloResolver } from "./resolvers/hello"
 import ormConfig from "./mikro-orm.config"
 import { ExpenseResolver } from "./resolvers/expense"
@@ -31,7 +31,7 @@ const main = async () => {
 
   app.use(
     session({
-      name: "qid",
+      name: COOKIE_NAME,
       store: new RedisStore({ client: redisClient, disableTouch: true }),
       cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 30, //30 days
