@@ -6,7 +6,7 @@
     "watch": "tsc -w",
     "server": "nodemon dist/index.js",
     "client": "yarn --cwd ../ui dev",
-    "dev": "concurrently \"yarn watch\" \"yarn server\" \"yarn client\"",
+    "dev": "concurrently \"redis-server\" \"yarn watch\" \"yarn server\" \"yarn client\"",
     "create-migration": "mikro-orm migration:create"
   },
   "repository": "git@github.com:pirciualex/expenseio.git",

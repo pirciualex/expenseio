@@ -7,9 +7,11 @@ import { LogoIcon } from "../icons"
 
 const Navbar = () => {
   const [{ data, fetching }] = useMeQuery()
-  let body = null
+  let body
 
-  if (!data?.me) {
+  if (fetching) {
+    body = null
+  } else if (!data?.me) {
     body = (
       <>
         <NextLink href="/login">

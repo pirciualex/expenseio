@@ -1,8 +1,7 @@
 mutation Login($input: UsernamePasswordInput!) {
   login(input: $input) {
     user {
-      id
-      username
+      ...BasicUser
     }
     errors {
       field
