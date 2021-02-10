@@ -1,4 +1,4 @@
-import { Button, InputGroup, InputRightElement } from "@chakra-ui/react"
+import { Box, Button, InputGroup, InputRightElement } from "@chakra-ui/react"
 import { Form, Formik } from "formik"
 import { withUrqlClient } from "next-urql"
 import { useRouter } from "next/router"
@@ -21,9 +21,9 @@ const Register: React.FC<registerProps> = () => {
   return (
     <Wrapper variant="small">
       <Formik
-        initialValues={{ username: "", password: "" }}
+        initialValues={{ email: "", username: "", password: "" }}
         onSubmit={async (values, { setErrors }) => {
-          const response = await register(values)
+          const response = await register({ input: values })
 
           if (response.data?.register.errors) {
             setErrors(toErrorMap(response.data.register.errors))
@@ -39,6 +39,9 @@ const Register: React.FC<registerProps> = () => {
               placeholder="username"
               label="Username"
             />
+            <Box mt={10}>
+              <InputField name="email" placeholder="email" label="Email" />
+            </Box>
             <InputGroup mt={10}>
               <InputField
                 name="password"

@@ -1,5 +1,5 @@
-mutation Register($username: String!, $password: String!) {
-  register(input: { username: $username, password: $password }) {
+mutation Register($input: RegisterUserInput!) {
+  register(input: $input) {
     user {
       ...BasicUser
     }

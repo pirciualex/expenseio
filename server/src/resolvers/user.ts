@@ -1,27 +1,14 @@
-import {
-  Arg,
-  Ctx,
-  Field,
-  InputType,
-  Mutation,
-  Query,
-  Resolver,
-} from "type-graphql"
 import argon2 from "argon2"
-// import { EntityManager } from "@mikro-orm/postgresql"
+import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql"
 
-import { DbContext } from "../types"
+import { COOKIE_NAME } from "../constants"
+import { LoginUserInput } from "../dtos/LoginUserInput"
+import { RegisterUserInput } from "../dtos/RegisterUserInput"
 import { UserResponseDto } from "../dtos/UserResponseDto"
 import { User } from "../entities/User"
-import { COOKIE_NAME } from "../constants"
-
-@InputType()
-class UsernamePasswordInput {
-  @Field()
-  username: string
-  @Field()
-  password: string
-}
+import { validateRegister } from "../helpers/validateRegister"
+// import { EntityManager } from "@mikro-orm/postgresql"
+import { DbContext } from "../types"
 
 @Resolver()
 export class UserResolver {
@@ -38,33 +25,17 @@ export class UserResolver {
 
   @Mutation(() => UserResponseDto)
   async register(
-    @Arg("input") input: UsernamePasswordInput,
+    @Arg("input") input: RegisterUserInput,
     @Ctx() { em, req }: DbContext
   ): Promise<UserResponseDto> {
-    if (input.username.length <= 3) {
-      return {
-        errors: [
-          {
-            field: "username",
-            message: "Length must be greater than 3!",
-          },
-        ],
-      }
-    }
-
-    if (input.password.length <= 3) {
-      return {
-        errors: [
-          {
-            field: "password",
-            message: "Length must be greater than 3!",
-          },
-        ],
-      }
+    const errors = validateRegister(input)
+    if (errors) {
+      return { errors }
     }
 
     const hashedPassword = await argon2.hash(input.password)
     const user = em.create(User, {
+      email: input.email,
       username: input.username,
       password: hashedPassword,
     })
@@ -75,6 +46,7 @@ export class UserResolver {
       //   .createQueryBuilder(User)
       //   .getKnexQuery()
       //   .insert({
+      //     email: input.email,
       //     username: input.username,
       //     password: hashedPassword,
       //     created_at: new Date(),
@@ -107,20 +79,26 @@ export class UserResolver {
 
   @Mutation(() => UserResponseDto)
   async login(
-    @Arg("input") input: UsernamePasswordInput,
+    @Arg("input") input: LoginUserInput,
     @Ctx() { em, req }: DbContext
   ): Promise<UserResponseDto> {
-    const user = await em.findOne(User, { username: input.username })
+    const user = await em.findOne(
+      User,
+      input.usernameOrEmail.includes("@")
+        ? { email: input.usernameOrEmail }
+        : { username: input.usernameOrEmail }
+    )
     if (!user) {
       return {
         errors: [
           {
-            field: "username",
+            field: "usernameOrEmail",
             message: "User provided doesn't exist!",
           },
         ],
       }
     }
+
     const valid = await argon2.verify(user.password, input.password)
     if (!valid) {
       return {
