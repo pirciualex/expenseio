@@ -1,0 +1,8 @@
+query Expenses {
+  expenses {
+    id
+    createdAt
+    updatedAt
+    value
+  }
+}
