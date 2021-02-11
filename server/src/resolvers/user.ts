@@ -1,11 +1,15 @@
 import argon2 from "argon2"
 import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql"
+import { v4 } from "uuid"
 
-import { COOKIE_NAME } from "../constants"
+import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants"
+import { ChangePasswordInput } from "../dtos/ChangePasswordInput"
 import { LoginUserInput } from "../dtos/LoginUserInput"
 import { RegisterUserInput } from "../dtos/RegisterUserInput"
 import { UserResponseDto } from "../dtos/UserResponseDto"
 import { User } from "../entities/User"
+import { sendEmail } from "../helpers/sendEmail"
+import { validateChangePassword } from "../helpers/validateChangePassword"
 import { validateRegister } from "../helpers/validateRegister"
 // import { EntityManager } from "@mikro-orm/postgresql"
 import { DbContext } from "../types"
@@ -129,5 +133,66 @@ export class UserResolver {
         resolve(true)
       })
     )
+  }
+
+  @Mutation(() => Boolean)
+  async forgotPassword(
+    @Arg("email") email: string,
+    @Ctx() { em, redis }: DbContext
+  ): Promise<Boolean> {
+    const user = await em.findOne(User, { email })
+    if (!user) {
+      return true
+    }
+
+    const token = v4()
+    redis.set(FORGET_PASSWORD_PREFIX + token, user.id, "ex", 1000 * 60 * 60 * 3)
+    await sendEmail(
+      email,
+      `<a href="http://localhost:3000/change-password/${token}">Change password</a>`
+    )
+    return true
+  }
+
+  @Mutation(() => UserResponseDto)
+  async changePassword(
+    @Arg("input") input: ChangePasswordInput,
+    @Ctx() { em, redis }: DbContext
+  ): Promise<UserResponseDto> {
+    const errors = validateChangePassword(input)
+    if (errors) {
+      return { errors }
+    }
+
+    const key = FORGET_PASSWORD_PREFIX + input.token
+    const userId = await redis.get(key)
+    if (!userId) {
+      return {
+        errors: [
+          {
+            field: "token",
+            message: "Token has expired!",
+          },
+        ],
+      }
+    }
+
+    const user = await em.findOne(User, { id: parseInt(userId) })
+    if (!user) {
+      return {
+        errors: [
+          {
+            field: "token",
+            message: "User does not exist!",
+          },
+        ],
+      }
+    }
+
+    user.password = await argon2.hash(input.newPassword)
+    await em.persistAndFlush(user)
+    await redis.del(key)
+
+    return { user }
   }
 }

@@ -4,8 +4,7 @@ mutation Register($input: RegisterUserInput!) {
       ...BasicUser
     }
     errors {
-      field
-      message
+      ...BasicError
     }
   }
 }
