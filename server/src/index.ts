@@ -1,22 +1,36 @@
-import { MikroORM } from "@mikro-orm/core"
 import { ApolloServer } from "apollo-server-express"
-import { buildSchema } from "type-graphql"
 import connectRedis from "connect-redis"
 import cors from "cors"
 import express from "express"
-import Redis from "ioredis"
 import session from "express-session"
+import Redis from "ioredis"
+import "reflect-metadata"
+import { buildSchema } from "type-graphql"
+import { createConnection } from "typeorm"
 
-import { COOKIE_NAME, __port__, __prod__ } from "./constants"
-import { HelloResolver } from "./resolvers/hello"
-import ormConfig from "./mikro-orm.config"
+import {
+  COOKIE_NAME,
+  POSTGRES_DATABASE,
+  POSTGRES_PASSWORD,
+  POSTGRES_USERNAME,
+  __port__,
+} from "./constants"
+import { Expense } from "./entities/Expense"
+import { User } from "./entities/User"
 import { ExpenseResolver } from "./resolvers/expense"
+import { HelloResolver } from "./resolvers/hello"
 import { UserResolver } from "./resolvers/user"
-import { DbContext } from "./types"
 
 const main = async () => {
-  const orm = await MikroORM.init(ormConfig)
-  await orm.getMigrator().up()
+  await createConnection({
+    type: "postgres",
+    database: POSTGRES_DATABASE,
+    username: POSTGRES_USERNAME,
+    password: POSTGRES_PASSWORD,
+    logging: true,
+    synchronize: true,
+    entities: [Expense, User],
+  })
 
   const app = express()
 
@@ -34,7 +48,7 @@ const main = async () => {
       name: COOKIE_NAME,
       store: new RedisStore({ client: redis as any, disableTouch: true }),
       cookie: {
-        maxAge: 1000 * 60 * 60 * 24 * 30, //30 days
+        maxAge: 1000 * 60 * 60 * 24 * 60, //60 days
         httpOnly: true,
         sameSite: "lax", // csrf
         //secure: __prod__, // only on https
@@ -50,7 +64,7 @@ const main = async () => {
       resolvers: [ExpenseResolver, HelloResolver, UserResolver],
       validate: false,
     }),
-    context: ({ req, res }): DbContext => ({ em: orm.em, req, res, redis }),
+    context: ({ req, res }) => ({ req, res, redis }),
   })
 
   apolloServer.applyMiddleware({

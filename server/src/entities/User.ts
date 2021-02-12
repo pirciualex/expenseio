@@ -1,6 +1,7 @@
 // import { Entity, PrimaryKey, Property } from "@mikro-orm/core"
 import { Field, ObjectType } from "type-graphql"
 import {
+  BaseEntity,
   Column,
   CreateDateColumn,
   Entity,
@@ -10,7 +11,7 @@ import {
 
 @ObjectType()
 @Entity()
-export class User {
+export class User extends BaseEntity {
   @Field()
   @PrimaryGeneratedColumn()
   id!: number

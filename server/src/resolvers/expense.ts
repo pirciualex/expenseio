@@ -1,22 +1,19 @@
-import { DbContext } from "src/types"
-import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql"
-import { Expense } from "../entities/Expense"
-import { ExpenseResponseDto } from "../dtos/ExpenseDto"
+import { Arg, Mutation, Query, Resolver } from "type-graphql"
+
 import { ExpenseDeletedDto } from "../dtos/ExpenseDeletedDto"
+import { ExpenseResponseDto } from "../dtos/ExpenseDto"
+import { Expense } from "../entities/Expense"
 
 @Resolver()
 export class ExpenseResolver {
   @Query(() => [Expense!]!)
-  expenses(@Ctx() { em }: DbContext): Promise<Expense[]> {
-    return em.find(Expense, {})
+  expenses(): Promise<Expense[]> {
+    return Expense.find()
   }
 
   @Query(() => ExpenseResponseDto)
-  async expense(
-    @Arg("id") id: number,
-    @Ctx() { em }: DbContext
-  ): Promise<ExpenseResponseDto> {
-    const expense = await em.findOne(Expense, { id })
+  async expense(@Arg("id") id: number): Promise<ExpenseResponseDto> {
+    const expense = await Expense.findOne(id)
     if (!expense) {
       return {
         errors: [
@@ -31,22 +28,16 @@ export class ExpenseResolver {
   }
 
   @Mutation(() => Expense)
-  async createExpense(
-    @Arg("value") value: number,
-    @Ctx() { em }: DbContext
-  ): Promise<Expense | null> {
-    const expense = em.create(Expense, { value })
-    await em.persistAndFlush(expense)
-    return expense
+  async createExpense(@Arg("value") value: number): Promise<Expense | null> {
+    return Expense.create({ value }).save()
   }
 
   @Mutation(() => ExpenseResponseDto)
   async updateExpense(
     @Arg("id") id: number,
-    @Arg("value") value: number,
-    @Ctx() { em }: DbContext
+    @Arg("value") value: number
   ): Promise<ExpenseResponseDto> {
-    const expense = await em.findOne(Expense, { id })
+    const expense = await Expense.findOne(id)
     if (!expense) {
       return {
         errors: [
@@ -57,16 +48,14 @@ export class ExpenseResolver {
         ],
       }
     }
-    expense.value = value
+
+    await Expense.update({ id }, { value })
     return { expense }
   }
 
   @Mutation(() => ExpenseDeletedDto)
-  async deleteExpense(
-    @Arg("id") id: number,
-    @Ctx() { em }: DbContext
-  ): Promise<ExpenseDeletedDto> {
-    const expense = await em.findOne(Expense, { id })
+  async deleteExpense(@Arg("id") id: number): Promise<ExpenseDeletedDto> {
+    const expense = await Expense.findOne(id)
     if (!expense) {
       return {
         errors: [
@@ -77,7 +66,7 @@ export class ExpenseResolver {
         ],
       }
     }
-    await em.nativeDelete(Expense, { id })
+    await Expense.delete(id)
     return { deleted: true }
   }
 }
