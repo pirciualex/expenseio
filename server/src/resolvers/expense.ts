@@ -1,8 +1,18 @@
-import { Arg, Mutation, Query, Resolver } from "type-graphql"
+import {
+  Arg,
+  Ctx,
+  Mutation,
+  Query,
+  Resolver,
+  UseMiddleware,
+} from "type-graphql"
 
 import { ExpenseDeletedDto } from "../dtos/ExpenseDeletedDto"
 import { ExpenseResponseDto } from "../dtos/ExpenseDto"
+import { ExpenseInputDto } from "../dtos/ExpenseInputDto"
 import { Expense } from "../entities/Expense"
+import { isAuth } from "../middleware/isAuth"
+import { DbContext } from "../types"
 
 @Resolver()
 export class ExpenseResolver {
@@ -28,8 +38,15 @@ export class ExpenseResolver {
   }
 
   @Mutation(() => Expense)
-  async createExpense(@Arg("value") value: number): Promise<Expense | null> {
-    return Expense.create({ value }).save()
+  @UseMiddleware(isAuth)
+  async createExpense(
+    @Arg("input") input: ExpenseInputDto,
+    @Ctx() { req }: DbContext
+  ): Promise<Expense | null> {
+    return Expense.create({
+      ...input,
+      userId: req.session.userId,
+    }).save()
   }
 
   @Mutation(() => ExpenseResponseDto)
